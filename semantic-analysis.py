@@ -217,20 +217,18 @@ WhileStatement grammar production rule is defined as while followed by
 """
 def WhileStatement():
     global token_pointer
+    track_token_pointer = 0
     if tokens[token_pointer] == "while" and token_pointer < len(tokens):
-        token_pointer += 1
-    else:
-        error("Missing 'while'. Error at index " + str(token_pointer))
-    if tokens[token_pointer] == "(" and token_pointer < len(tokens):
-        token_pointer += 1
-        Expression()
-    else:
-        error("Missing ( after 'while'. Error at index " + str(token_pointer))
-    if tokens[token_pointer] == ")" and token_pointer < len(tokens):
-        token_pointer += 1
-    else:
-        error("Missing ) after 'while'. Error at index " + str(token_pointer))
-    Statement()
+        token_pointer += 2 #increment for 'while' and '('
+        track_token_pointer = token_pointer #keep track of where the expression starts for iterating
+        evaluate = Expression()
+        token_pointer += 1 #increment for ')'
+    Statement(evaluate)
+    while evaluate:
+        token_pointer = track_token_pointer #reset to beginning of Expression
+        evaluate = Expression()
+        token_pointer += 1 #increment for ')'
+        Statement(evaluate)
 
 """
 ReturnStatement grammar production rule is defined as return followed by
