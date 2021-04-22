@@ -201,6 +201,8 @@ def PrintStmt(evaluate):
     #print(result)
     if token_pointer < len(tokens) and tokens[token_pointer] == ";":
         token_pointer += 1
+    else:
+        error("Missing semicolon. Error at index " + str(token_pointer))
     if evaluate:
         print("PRINITING CLAUE")
         print(result)
