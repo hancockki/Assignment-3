@@ -195,6 +195,8 @@ def PrintStmt(evaluate):
     global token_pointer
     if token_pointer < len(tokens) and tokens[token_pointer] == "print":
         token_pointer += 1
+    else:
+        error("Missing print. Error at index " + str(token_pointer))
     result = Expression()
     #print(result)
     if token_pointer < len(tokens) and tokens[token_pointer] == ";":
@@ -481,7 +483,7 @@ def Factor():
 "Print error message and exit program"
 def error(msg):
     print("Syntax error.\n" + msg)
-    exit()
+    exit(0)
 
 if __name__ == "__main__":
     main(sys.argv[1])
