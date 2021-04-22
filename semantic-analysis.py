@@ -189,13 +189,11 @@ def PrintStmt(evaluate):
     else:
         error("Missing print. Error at index " + str(token_pointer))
     result = Expression()
-    #print(result)
     if token_pointer < len(tokens) and tokens[token_pointer] == ";":
         token_pointer += 1
     else:
         error("Missing semicolon. Error at index " + str(token_pointer))
     if evaluate:
-        print("PRINITING CLAUE")
         print(result)
 
 """
@@ -245,14 +243,9 @@ def WhileStatement():
             else:
                 error("Missing ')'. Error at index " + str(token_pointer))
             if evaluate:
-                print("Evaluating while loop: ", evaluate)
                 Statement(evaluate)
                 token_pointer = track_token_pointer #decrement token pointer to beginning of while loop
-                #print("Track token pointer: ", track_token_pointer, "Lexeme: ", lexemes[track_token_pointer])
             else:
-                print("Not evaluating while loop: ", evaluate)
-                print(symbol_table)
-                print("Track token pointer: ", token_pointer, "Lexeme: ", lexemes[token_pointer])
                 Statement(evaluate) #pass in evaluate as false to read in the tokens
                 break
     else:
@@ -299,7 +292,6 @@ def Assignment(evaluate):
     result = Expression()
     #if evaluate is True, update symbol Table
     if evaluate:
-        print(var_id, symbol_table[var_id][0], result)
         if symbol_table[var_id][0] != (type(result).__name__):
             #widening an int (RHS) to a float (LHS)
             if symbol_table[var_id][0] == "float" and (type(result).__name__) == "int":
@@ -326,7 +318,6 @@ def Expression():
         token_pointer += 1
         result2 = Conjunction()
         result = result or result2
-    print("Expression is:", result)
     return result
 
 """
@@ -340,7 +331,6 @@ def Conjunction():
     while token_pointer < len(tokens) and tokens[token_pointer] == "&&":
         token_pointer += 1
         #continue computing logical AND until the token pointer doesnt match &&
-        print("Token pointer before return val: ", token_pointer, "Token: ", tokens[token_pointer])
         result2 = Equality()
         result = result and result2
     return result
@@ -373,7 +363,6 @@ def Relation():
     global expression_list
     result_LHS = Addition()
     if token_pointer < len(tokens) and tokens[token_pointer] == "relOp":
-        print("got a relop:", lexemes[token_pointer])
         relOp_token_pointer = token_pointer
         token_pointer += 1
         result_RHS = Addition()
@@ -488,8 +477,7 @@ def Factor():
             token_pointer += 1 #for closing parenthenses!!
             return result
     else:
-        print("error")
-        exit(0)
+        error("Nonterminal symbol not detected. Error at index " + str(token_pointer))
         
 
 "Print error message and exit program"
