@@ -25,7 +25,6 @@ def get_input(input):
     with open(input, 'r') as tokens_stream:
         for line in tokens_stream:
             next_line = line.split()
-            print(next_line)
             next_token = next_line[0]
             next_lexeme = next_line[1]
             tokens.append(next_token)
@@ -46,7 +45,6 @@ is raised.
 
 def main(input):
     get_input(input)
-    print("Tokens:\n", tokens, "\nLexemes:\n ", lexemes)
     Program()  # start symbol
     if token_pointer < len(tokens):  # could not consume the whole input
         print("Incomplete program. Error at index " +
@@ -276,7 +274,6 @@ by semicolon.
 """
 def Assignment(evaluate):
     global token_pointer
-    print(symbol_table)
     if token_pointer < len(tokens) and tokens[token_pointer] == "id":
         var_id = lexemes[token_pointer]
         if var_id not in symbol_table.keys():
@@ -367,7 +364,6 @@ def Relation():
         token_pointer += 1
         result_RHS = Addition()
         if lexemes[relOp_token_pointer] == "<":
-            print(result_LHS, "<", result_RHS)
             return result_LHS < result_RHS
         elif lexemes[relOp_token_pointer] == "<=":
             return result_LHS <= result_RHS
