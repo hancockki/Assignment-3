@@ -200,6 +200,7 @@ def PrintStmt(evaluate):
     if token_pointer < len(tokens) and tokens[token_pointer] == ";":
         token_pointer += 1
     if evaluate:
+        print("PRINITING CLAUE")
         print(result)
 
 """
@@ -231,7 +232,7 @@ def WhileStatement():
         track_token_pointer = token_pointer
         #print("Track token pointer: ", track_token_pointer, "Lexeme: ", lexemes[track_token_pointer])
         #keep track of where the expression starts for iterating
-        while track_token_pointer == token_pointer:
+        while True:
             evaluate = Expression()
            # print("current token pointer: ", token_pointer, "Lexeme: ", lexemes[token_pointer])
             token_pointer += 1 #consume ')'
@@ -245,6 +246,7 @@ def WhileStatement():
                 print(symbol_table)
                 print("Track token pointer: ", token_pointer, "Lexeme: ", lexemes[token_pointer])
                 Statement(evaluate) #pass in evaluate as false to read in the tokens
+                break
 
 """
 ReturnStatement grammar production rule is defined as return followed by
@@ -253,6 +255,7 @@ Expression followed by semicolon.
 def ReturnStatement(evaluate):
     global token_pointer
     if tokens[token_pointer] == "return" and token_pointer < len(tokens):
+        print("in return-----------")
         token_pointer += 1
     Expression()
     if tokens[token_pointer] == ";" and token_pointer < len(tokens):
