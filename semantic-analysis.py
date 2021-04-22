@@ -41,7 +41,6 @@ def get_input(input):
             tokens.append(next_token)
             lexemes.append(next_lexeme)
 
-
 """
 Main method, driver for our recursion.
 We start by getting the stream of user tokens
@@ -173,7 +172,7 @@ def Statement(evaluate):
         Assignment(evaluate)
         return True
     elif token_pointer < len(tokens) and tokens[token_pointer] == "print":
-        PrintStmt()
+        PrintStmt(evaluate)
         return True
     elif token_pointer < len(tokens) and tokens[token_pointer] == "if":
         IfStatement()
@@ -182,7 +181,7 @@ def Statement(evaluate):
         WhileStatement()
         return True
     elif token_pointer < len(tokens) and tokens[token_pointer] == "return":
-        ReturnStatement()
+        ReturnStatement(evaluate)
         return True
     else:
         return False
@@ -192,18 +191,16 @@ def Statement(evaluate):
 PrintStmt grammar production rule is defined as print followed
 by expression followed by semicolon. 
 """
-def PrintStmt():
+def PrintStmt(evaluate):
     global token_pointer
     if token_pointer < len(tokens) and tokens[token_pointer] == "print":
         token_pointer += 1
-    else:
-        error("Missing print. Error at index " + str(token_pointer))
     result = Expression()
     #print(result)
     if token_pointer < len(tokens) and tokens[token_pointer] == ";":
         token_pointer += 1
-    else:
-        error("Missing semicolon. Error at index " + str(token_pointer))
+    if evaluate:
+        print(result)
 
 """
 Grammar production rule for IfStatement is if followed by (Expression) 
@@ -212,12 +209,11 @@ followed by Statement, followed by 0 or 1 iterations of else Statement
 def IfStatement():
     global token_pointer
     if tokens[token_pointer] == "if" and token_pointer < len(tokens):
-        token_pointer += 1
-    if tokens[token_pointer] == "(" and token_pointer < len(tokens):
-        token_pointer += 1
+        token_pointer += 2  #consume 'if' and '('
         evaluate = Expression()
-    if tokens[token_pointer] == ")" and token_pointer < len(tokens):
-        token_pointer += 1
+        token_pointer += 1 #consume ')'
+    else:
+        exit(0)
     Statement(evaluate)
     #check if we have an else block, not required
     if token_pointer < len(tokens) and tokens[token_pointer] == "else":
@@ -254,15 +250,15 @@ def WhileStatement():
 ReturnStatement grammar production rule is defined as return followed by
 Expression followed by semicolon. 
 """
-def ReturnStatement():
+def ReturnStatement(evaluate):
     global token_pointer
     if tokens[token_pointer] == "return" and token_pointer < len(tokens):
         token_pointer += 1
     Expression()
     if tokens[token_pointer] == ";" and token_pointer < len(tokens):
         token_pointer += 1
-    else:
-        error("Missing ; in return. Error at index " + str(token_pointer))
+    if evaluate:
+        exit(0)
 
 """
 Grammar production rule for assignment is defined as 

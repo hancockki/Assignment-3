@@ -53,6 +53,9 @@ id	z
 assignOp	=
 boolLiteral	false
 ;	;
+print   print
+id  z
+;   ;
 print	print
 id	x
 ;	;
