@@ -49,7 +49,7 @@ def main(input):
     print("Tokens:\n", tokens, "\nLexemes:\n ", lexemes)
     Program()  # start symbol
     if token_pointer < len(tokens):  # could not consume the whole input
-        print("Incomplete expression. Error at index " +
+        print("Incomplete program. Error at index " +
               str(token_pointer) + " " + str(tokens[token_pointer]))
     else:  # consumed all tokens with no errors
         print("Success")
@@ -230,14 +230,20 @@ WhileStatement grammar production rule is defined as while followed by
 def WhileStatement():
     global token_pointer
     if tokens[token_pointer] == "while" and token_pointer < len(tokens):
-        token_pointer += 2 #increment for 'while' and '('
-        track_token_pointer = token_pointer
-        #print("Track token pointer: ", track_token_pointer, "Lexeme: ", lexemes[track_token_pointer])
+        token_pointer += 1
+    else:
+        error("Missing 'while'. Error at index " + str(token_pointer))
+    if tokens[token_pointer] == "(" and token_pointer < len(tokens):
+        token_pointer += 1
         #keep track of where the expression starts for iterating
+        track_token_pointer = token_pointer
         while True:
             evaluate = Expression()
            # print("current token pointer: ", token_pointer, "Lexeme: ", lexemes[token_pointer])
-            token_pointer += 1 #consume ')'
+            if tokens[token_pointer] == ")" and token_pointer < len(tokens):
+                token_pointer += 1
+            else:
+                error("Missing ')'. Error at index " + str(token_pointer))
             if evaluate:
                 print("Evaluating while loop: ", evaluate)
                 Statement(evaluate)
@@ -249,6 +255,8 @@ def WhileStatement():
                 print("Track token pointer: ", token_pointer, "Lexeme: ", lexemes[token_pointer])
                 Statement(evaluate) #pass in evaluate as false to read in the tokens
                 break
+    else:
+        error("Missing '('. Error at index " + str(token_pointer))
 
 """
 ReturnStatement grammar production rule is defined as return followed by
@@ -282,8 +290,12 @@ def Assignment(evaluate):
             print("Variable not declared before Assignment. Error at token pointer", token_pointer)
             exit(0)
         token_pointer += 1
+    else:
+        error("Missing 'id'. Error at index " + str(token_pointer))
     if token_pointer < len(tokens) and tokens[token_pointer] == "assignOp":
         token_pointer += 1
+    else:
+        error("Missing 'assignOp'. Error at index " + str(token_pointer))
     result = Expression()
     #if evaluate is True, update symbol Table
     if evaluate:
@@ -299,6 +311,8 @@ def Assignment(evaluate):
         symbol_table[var_id][1] = result
     if token_pointer < len(tokens) and tokens[token_pointer] == ";":
         token_pointer += 1
+    else:
+        error("Missing ';'. Error at index " + str(token_pointer))
 
 """
 Grammar production rule for Expression() is Conjunction followed by
