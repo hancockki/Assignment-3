@@ -8,16 +8,6 @@ token_pointer = 0
 symbol_table = {}
 expression_list = []
 
-"""
-QUESTIONS:
-    - how to ensure the order of operators is correct, ie things like && and || are evaluated after */ which are 
-    evaluated after +-
-    - how do we handle characters? do we have to consider vars of type char ?
-    - should we catch if we get stuck in an infinite loop?
-    - what should the truth statement be in the while loop in the WhileStatement() method
-    - nested if statements -- how do we handle?!?!?!?
-    - submitting same code ?
-"""
 
 """
 Read in the file of tokens and lexemes.
@@ -121,6 +111,8 @@ def Declaration():
         #add new variable to symbol table
         symbol_table[lexemes[token_pointer]] = [var_type, None]
         token_pointer += 1
+    else:
+         error("Missing 'id'. Error at index " + str(token_pointer))
     # we could have id followed by any number of ,id (comma separated values)
     while token_pointer < len(tokens) and tokens[token_pointer] == ",":
         token_pointer += 1
@@ -130,6 +122,8 @@ def Declaration():
     #declaration must end with a semicolon
     if token_pointer < len(tokens) and tokens[token_pointer] == ";":
         token_pointer += 1
+    else:
+         error("Missing ';'. Error at index " + str(token_pointer))
 
 """
 Simply check if the token is type.
@@ -147,7 +141,6 @@ of Statement. Keep running Statement until it returns
 false.
 """
 def Statements():
-    #not sure if this is correct!!!
     while Statement(True):
         Statement(True)
 
@@ -166,9 +159,7 @@ We use elif here, meaning we try each one until it works.
                 Expresssion() in an if statement / while loop
 """
 def Statement(evaluate):
-    #print("Current token: ", token_pointer, lexemes[token_pointer])
     if token_pointer < len(tokens) and tokens[token_pointer] == "id":
-        #print("calling assignment with value: ", evaluate)
         Assignment(evaluate)
         return True
     elif token_pointer < len(tokens) and tokens[token_pointer] == "print":
@@ -274,15 +265,14 @@ Expression followed by semicolon.
 def ReturnStatement(evaluate):
     global token_pointer
     if tokens[token_pointer] == "return" and token_pointer < len(tokens):
-        print("in return-----------")
         token_pointer += 1
     else:
-        error("Missing 'return'. Error at index " + str(token_pointer))
+         error("Missing 'return'. Error at index " + str(token_pointer))
     Expression()
     if tokens[token_pointer] == ";" and token_pointer < len(tokens):
         token_pointer += 1
     else:
-        error("Missing ';'. Error at index " + str(token_pointer))
+         error("Missing ';'. Error at index " + str(token_pointer))
     if evaluate:
         exit(0)
 
@@ -319,7 +309,6 @@ def Assignment(evaluate):
                     type(result).__name__, "\nType error at index", token_pointer)
                 exit(0)
         symbol_table[var_id][1] = result
-    #print("Current val of id: ", var_id, symbol_table[var_id])
     if token_pointer < len(tokens) and tokens[token_pointer] == ";":
         token_pointer += 1
     else:
@@ -388,7 +377,6 @@ def Relation():
         relOp_token_pointer = token_pointer
         token_pointer += 1
         result_RHS = Addition()
-        #print("Token pointer is at: ", token_pointer)
         if lexemes[relOp_token_pointer] == "<":
             print(result_LHS, "<", result_RHS)
             return result_LHS < result_RHS
@@ -418,14 +406,12 @@ def Addition():
             print("Types do not match in addOp operation. Error at token pointer ", token_pointer)
             exit(0)
         result += sign * result2
-        #print("Computed addition. Result is:", result)
     return result
 
 """
 Check for widening scope
 """
 def checkTypes(param1, param2):
-    print("value: ", param1, " type: ", type(param1), " value: ", param2, " type: ", type(param2))
     if type(param1) != type(param2):
         #if one param is a float and the other is an int
         if (type(param1) == float or type(param2) == float) and (type(param1) == int or type(param2) == int):
@@ -497,7 +483,6 @@ def Factor():
                 exit(0)
         #check if we have opening parenthenses for (Expression)
         elif token_pointer < len(tokens) and tokens[token_pointer] == "(":
-           # print("Found openeing parenthenses!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             token_pointer += 1
             result = Expression()
             token_pointer += 1 #for closing parenthenses!!
