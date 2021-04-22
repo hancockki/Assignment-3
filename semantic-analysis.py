@@ -214,11 +214,14 @@ followed by Statement, followed by 0 or 1 iterations of else Statement
 def IfStatement():
     global token_pointer
     if tokens[token_pointer] == "if" and token_pointer < len(tokens):
-        token_pointer += 2  #consume 'if' and '('
+        token_pointer += 1
+    else:
+        error("Missing 'if'. Error at index " + str(token_pointer))
+    if tokens[token_pointer] == '(' and token_pointer < len(tokens):
         evaluate = Expression()
         token_pointer += 1 #consume ')'
     else:
-        exit(0)
+        error("Missing ')'. Error at index " + str(token_pointer))
     Statement(evaluate)
     #check if we have an else block, not required
     if token_pointer < len(tokens) and tokens[token_pointer] == "else":
