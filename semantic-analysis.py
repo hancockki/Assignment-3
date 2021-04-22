@@ -218,7 +218,11 @@ def IfStatement():
     else:
         error("Missing 'if'. Error at index " + str(token_pointer))
     if tokens[token_pointer] == '(' and token_pointer < len(tokens):
+        token_pointer += 1 #consume ')'
         evaluate = Expression()
+    else:
+        error("Missing '('. Error at index " + str(token_pointer))
+    if tokens[token_pointer] == ')' and token_pointer < len(tokens):
         token_pointer += 1 #consume ')'
     else:
         error("Missing ')'. Error at index " + str(token_pointer))
