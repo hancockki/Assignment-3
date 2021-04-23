@@ -1,26 +1,59 @@
-import sys
+"""
+Semantic analyzer for CLite program.
+This script builds on assignment 2, our syntactic
+analyzer. Here, we read in a file of tokens and lexemes,
+and check that the program is both syntactically correct
+and semantically correct. Since this lab focuses on semantic
+analysis, we will briefly outline the rules of this. For rules
+on syntactic analysis refer to assignment 2.
+A program is semantically correct if:
+    1) all variables are declared before assigned values
+    2) no two variables have the same name
+    3) no narrowing conversions (ie convert int to float)
+    4) truth value in all if statement / while loops / for loops
+    is valid
 
+The semantic analyzer will update the value of the statement inside
+an if stmt / for loop / while loop if the truth value is True. Otherwise,
+the lexemes/tokens are read in but the statement is not evaluated (ie we
+do not update the symbol table)
+
+Since we are just running this script with programs having a single main method,
+we only have one scope for our symbol table (ie we have a single global symbol table).
+The symbol table is updated when we call Statement and the truth value is True.
+
+The semantic analyzer will ONLY output print statements defined in the string
+of tokens and lexemes and any error messages that arise. Error messages include
+semantic errors like type errors as well as syntactic errors like missing braces.
+When an error is raised, the error message is printed and the program terminates.
+
+Principles of Programming Languages
+Bowdoin College
+Kim Hancock and Jigyasa Subedi
+"""
+
+
+import sys
 
 tokens = []
 lexemes = []
 token_pointer = 0
 
+#key is var id; value is a 2-element list containing the type and value
 symbol_table = {}
-expression_list = []
-
 
 """
 Read in the file of tokens and lexemes.
 Each line of the file contains a token followed
 by a tab, followed by a lexeme.
-This file is read in line by line, and the token 
+This file is read in line by line. The token 
 is added to our globally defined list, tokens.
+The lexeme is added to our globally defined list,
+lexemes.
 
 @params:
     input --> file name given on command line
 """
-
-
 def get_input(input):
     with open(input, 'r') as tokens_stream:
         for line in tokens_stream:
@@ -35,22 +68,19 @@ Main method, driver for our recursion.
 We start by getting the stream of user tokens
 and then call our start symbol.
 From Program(), all of the subsequent NT methods 
-are called until all tokens are processed or an error
-is raised.
+are called until all tokens and lexemes are processed or
+an error is raised (either syntactic or semantic).
 
 @params:
     input --> file name given on command line
 """
-
-
 def main(input):
     get_input(input)
-    Program()  # start symbol
-    if token_pointer < len(tokens):  # could not consume the whole input
+    Program() # start symbol
+    if token_pointer < len(tokens):  #could not consume the whole input
         print("Incomplete program. Error at index " +
               str(token_pointer) + " " + str(tokens[token_pointer]))
-    else:  # consumed all tokens with no errors
-        print("Success")
+
 """
 Start symbol.
 Since the first 5 tokens are the same for any program, we manually check these.
@@ -100,6 +130,7 @@ def Declarations():
 """
 Grammar rule for declaration is type followed
 by id, followed by 0 or more iterations of ,id.
+Add a new id to the symbol table as we declare variables.
 """
 
 def Declaration():
@@ -114,6 +145,7 @@ def Declaration():
     # we could have id followed by any number of ,id (comma separated values)
     while token_pointer < len(tokens) and tokens[token_pointer] == ",":
         token_pointer += 1
+        #add new var to symbol table
         if token_pointer < len(tokens) and tokens[token_pointer] == "id":
             symbol_table[lexemes[token_pointer]] = [var_type, None]
             token_pointer += 1
@@ -154,7 +186,7 @@ We use elif here, meaning we try each one until it works.
 @params:
     evaluate --> true if we want to change the symbol after evaluation,
                 false if not. This is determined by the truth value of the 
-                Expresssion() in an if statement / while loop
+                Expresssion() in an if statement / for loop / while loop
 """
 def Statement(evaluate):
     if token_pointer < len(tokens) and tokens[token_pointer] == "id":
@@ -179,6 +211,12 @@ def Statement(evaluate):
 """
 PrintStmt grammar production rule is defined as print followed
 by expression followed by semicolon. 
+If we want to evaluate the statement, we print the value of the Stmt.
+We always want to print if the print statement is not in a loop/if statement.
+If it is in a loop/if statement and evaluate is true, then we print it.
+
+@params:
+    evaluate --> true if we want to print, false if not
 """
 def PrintStmt(evaluate):
     global token_pointer
@@ -196,7 +234,9 @@ def PrintStmt(evaluate):
 
 """
 Grammar production rule for IfStatement is if followed by (Expression) 
-followed by Statement, followed by 0 or 1 iterations of else Statement
+followed by Statement, followed by 0 or 1 iterations of else Statement.
+Checks if the truth statement in the Expression of the if statement
+is true, and if so, we evaluate the body of the if statement.
 """
 def IfStatement():
     global token_pointer
@@ -205,12 +245,12 @@ def IfStatement():
     else:
         error("Missing 'if'. Error at index " + str(token_pointer))
     if tokens[token_pointer] == '(' and token_pointer < len(tokens):
-        token_pointer += 1 #consume ')'
-        evaluate = Expression()
+        token_pointer += 1
+        evaluate = Expression() #get truth value for if statement
     else:
         error("Missing '('. Error at index " + str(token_pointer))
     if tokens[token_pointer] == ')' and token_pointer < len(tokens):
-        token_pointer += 1 #consume ')'
+        token_pointer += 1
     else:
         error("Missing ')'. Error at index " + str(token_pointer))
     Statement(evaluate)
@@ -222,6 +262,10 @@ def IfStatement():
 """
 WhileStatement grammar production rule is defined as while followed by
 (Expression) followed by Statement.
+Continuously execute the Statement in the body of the while loop until
+the truth value of the while loop is false. While it is true, update
+the symbol table based on the body of the while loop. If it is false,
+break from the loop.
 """
 def WhileStatement():
     global token_pointer
@@ -235,7 +279,6 @@ def WhileStatement():
         track_token_pointer = token_pointer
         while True:
             evaluate = Expression()
-           # print("current token pointer: ", token_pointer, "Lexeme: ", lexemes[token_pointer])
             if tokens[token_pointer] == ")" and token_pointer < len(tokens):
                 token_pointer += 1
             else:
@@ -252,6 +295,7 @@ def WhileStatement():
 """
 ReturnStatement grammar production rule is defined as return followed by
 Expression followed by semicolon. 
+If we want to evaluate the return statement, exit the program.
 """
 def ReturnStatement(evaluate):
     global token_pointer
@@ -264,13 +308,18 @@ def ReturnStatement(evaluate):
         token_pointer += 1
     else:
          error("Missing ';'. Error at index " + str(token_pointer))
-    if evaluate:
+    if evaluate: #exit program if we want to execute this return statement
         exit(0)
 
 """
 Grammar production rule for assignment is defined as 
 if followed by assignOp followed by Expression followed
 by semicolon.
+Update symbol table if we are executing this line of code.
+Otherwise just read in the tokens/lexemes.
+
+@params:
+    evaluate --> update symbol table if true
 """
 def Assignment(evaluate):
     global token_pointer
@@ -286,8 +335,8 @@ def Assignment(evaluate):
         token_pointer += 1
     else:
         error("Missing 'assignOp'. Error at index " + str(token_pointer))
-    result = Expression()
-    #if evaluate is True, update symbol Table
+    result = Expression() #compute the new value of the variable
+    #if evaluate is True, update symbol Table to store result
     if evaluate:
         if symbol_table[var_id][0] != (type(result).__name__):
             #widening an int (RHS) to a float (LHS)
@@ -313,6 +362,7 @@ def Expression():
     result = Conjunction()
     while token_pointer < len(tokens) and tokens[token_pointer] == "||":
         token_pointer += 1
+        #continue computing logical OR until the token pointer doesnt match ||
         result2 = Conjunction()
         result = result or result2
     return result
@@ -363,6 +413,7 @@ def Relation():
         relOp_token_pointer = token_pointer
         token_pointer += 1
         result_RHS = Addition()
+        #compute the correct logical operator
         if lexemes[relOp_token_pointer] == "<":
             return result_LHS < result_RHS
         elif lexemes[relOp_token_pointer] == "<=":
@@ -376,25 +427,29 @@ def Relation():
 
 """
 Grammar Production rule for Addition is Term followed by zero or 
-more iterations of addOp Term
+more iterations of addOp Term. Compute addition/subtraction
 """
 def Addition():
     global token_pointer
-    global expression_list
     result = Term()
     while token_pointer < len(tokens) and tokens[token_pointer] == "addOp":
         sign = 1 if lexemes[token_pointer] == '+' else -1
         token_pointer+=1
         result2 = Term()
+        #verify the types match
         valid = checkTypes(result, result2)
         if not valid:
             print("Types do not match in addOp operation. Error at token pointer ", token_pointer)
             exit(0)
-        result += sign * result2
+        result += sign * result2 #sign determines whether it is addition or subtraction
     return result
 
 """
-Check for widening scope
+Check for widening scope for binary operations.
+
+@params:
+    param1 --> value of LHS of binary operation
+    param2 --> value of RHS of binary operation
 """
 def checkTypes(param1, param2):
     if type(param1) != type(param2):
@@ -408,29 +463,30 @@ def checkTypes(param1, param2):
 
 """
 Grammar Production rule for Term is Factor followed by zero or more
-iterations of multOp Factor 
+iterations of multOp Factor. compute mult/division
 """
 def Term():
     global token_pointer
-    global expression_list
     result = Factor()
-    #print("LHS of multOp:", result)
     while token_pointer < len(tokens) and tokens[token_pointer] == "multOp":
+        #set exponent to -1 if we want to do division
         exponent = 1 if lexemes[token_pointer] == "*" else -1
         token_pointer += 1
         result2 = Factor()
-        #print("RHS of multOp:", result2)
         valid = checkTypes(result, result2)
         if not valid:
             print("Types mismatched. Error at token pointer ", token_pointer)
             exit(0)
         result *= result2 ** exponent
-        #print("Computed multOp. Result is: ", result)
     return result
 
 """ 
 Grammar Production rule for Factor is id OR intLiteral OR boolLiteral OR
-floatLiteral OR (Expression)
+floatLiteral OR (Expression).
+Try to convert the lexeme to the type defined by the token, raising
+type errors if they do not match.
+Return the factor and then return from the above recursive calls to compute
+the operations on this factor as determined by the expression.
 """
 def Factor():
     global token_pointer
@@ -443,7 +499,6 @@ def Factor():
             token_pointer += 1
             try:
                 value = int(lexemes[token_pointer-1])
-                #print("int is: ", value)
                 return value
             except:
                 print("Type error, not an int. Eror at token pointer: ", token_pointer-1)
