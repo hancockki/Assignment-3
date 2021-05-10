@@ -32,28 +32,6 @@ Principles of Programming Languages
 Bowdoin College
 Kim Hancock and Jigyasa Subedi
 
-
-Test Case 4 (if condition with a bigger expression where i = 600 and j = 500 initially):
-
-if (i <= 100 || (i == 600 && j > 100) && ( (1*3+j) <= i ) && ( (1*4/(1+1))*5 > 2 ) )
-
- i = 1000;
-
-print i; //Should print 1000.
-
-Test Case 8 (Error due to use of a variable without declaration)
-
-Try to do print i without declaring i. Must generate an err
-
-Test Case 9 (Error due to duplicate variable declarations)
-
-Try to declaring i twice. Must generate an error.
-
-Test Case 11 (nested if statements): i = 100; j = 500; if (i > j) if (i > 0) print i;
-
-Should not print anything
-
-
 """
 
 
@@ -161,6 +139,10 @@ def Declaration():
     global token_pointer
     var_type = Type() #type must come first
     if token_pointer < len(tokens) and tokens[token_pointer] == "id":
+        if token_pointer < len(tokens) and tokens[token_pointer] == "id":
+            if lexemes[token_pointer] in symbol_table:
+                print("Trying to declare the same variable twice. Error at index " + str(token_pointer))
+                exit(0)
         #add new variable to symbol table
         symbol_table[lexemes[token_pointer]] = [var_type, None]
         token_pointer += 1
@@ -171,6 +153,7 @@ def Declaration():
         token_pointer += 1
         #add new var to symbol table
         if token_pointer < len(tokens) and tokens[token_pointer] == "id":
+            print("current var:", lexemes[token_pointer])
             if lexemes[token_pointer] in symbol_table:
                 print("Trying to declare the same variable twice. Error at index " + str(token_pointer))
                 exit(0)
@@ -223,7 +206,7 @@ def Statement(evaluate):
         PrintStmt(evaluate)
         return True
     elif token_pointer < len(tokens) and tokens[token_pointer] == "if":
-        IfStatement()
+        IfStatement(evaluate)
         return True
     elif token_pointer < len(tokens) and tokens[token_pointer] == "while":
         WhileStatement()
@@ -267,16 +250,20 @@ Grammar production rule for IfStatement is if followed by (Expression)
 followed by Statement, followed by 0 or 1 iterations of else Statement.
 Checks if the truth statement in the Expression of the if statement
 is true, and if so, we evaluate the body of the if statement.
+
+@params: 
+    evaluate --> used for if statements nested in while. If false,
+    then we do not want to evaluate the if statement even if it is true
 """
-def IfStatement():
+def IfStatement(evaluate):
     global token_pointer
-    evaluate = True
+    evaluate_if = evaluate #initialize to the value passed in
     while tokens[token_pointer] == "if" and token_pointer < len(tokens):
         token_pointer += 1
         if tokens[token_pointer] == '(' and token_pointer < len(tokens):
             token_pointer += 1
-            if evaluate:
-                evaluate = Expression() #get truth value for if statement
+            if evaluate_if: #if the while loop was true, see if we want to execute if
+                evaluate_if = Expression() #get truth value for if statement
             else:
                 Expression()
         else:
@@ -285,11 +272,14 @@ def IfStatement():
             token_pointer += 1
         else:
             error("Missing ')'. Error at index " + str(token_pointer))
-    Statement(evaluate)
+    Statement(evaluate_if)
     #check if we have an else block, not required
     if token_pointer < len(tokens) and tokens[token_pointer] == "else":
         token_pointer += 1
-        Statement(not evaluate) #we do want to evaluate if evaluate == true
+        if evaluate: #if evaluate was false, we do not want to execute the else block
+            Statement(not evaluate_if) #this is the case that evaluate_if is false, so instead we evaluate the else
+        else: #we do not want to evaluate if OR else
+            Statement(False)
 
 """
 WhileStatement grammar production rule is defined as while followed by
@@ -311,6 +301,7 @@ def WhileStatement():
         track_token_pointer = token_pointer
         while True:
             evaluate = Expression()
+            #print("Iteration of while: ", evaluate)
             if tokens[token_pointer] == ")" and token_pointer < len(tokens):
                 token_pointer += 1
             else:
@@ -368,6 +359,7 @@ def Assignment(evaluate):
     else:
         error("Missing 'assignOp'. Error at index " + str(token_pointer))
     result = Expression() #compute the new value of the variable
+    #print("result is: ", result, " evaluate: ", evaluate)
     #if evaluate is True, update symbol Table to store result
     if evaluate:
         if symbol_table[var_id][0] != (type(result).__name__):
@@ -420,13 +412,12 @@ zero or 1 occurences of equOp Relation
 """
 def Equality():
     global token_pointer
-    global expression_list
     result_LHS = Relation()
     if token_pointer < len(tokens) and tokens[token_pointer] == "equOp":
-        expression_list.append(lexemes[token_pointer])
+        equOp_token = tokens[token_pointer]
         token_pointer+=1
         result_RHS = Relation()
-        if lexemes[token_pointer] == "==":
+        if lexemes[equOp_token] == "==":
             return result_LHS == result_RHS
         else:
             return result_LHS != result_RHS
