@@ -9,7 +9,8 @@ on syntactic analysis refer to assignment 2.
 A program is semantically correct if:
     1) all variables are declared before assigned values
     2) no two variables have the same name
-    3) no narrowing conversions (ie convert int to float)
+    3) a variable declared as one type cannot be reassigned another type
+    3) The only narrowing conversion allowed is converting float to int
     4) truth value in all if statement / while loops / for loops
     is valid
 
@@ -30,6 +31,29 @@ When an error is raised, the error message is printed and the program terminates
 Principles of Programming Languages
 Bowdoin College
 Kim Hancock and Jigyasa Subedi
+
+
+Test Case 4 (if condition with a bigger expression where i = 600 and j = 500 initially):
+
+if (i <= 100 || (i == 600 && j > 100) && ( (1*3+j) <= i ) && ( (1*4/(1+1))*5 > 2 ) )
+
+ i = 1000;
+
+print i; //Should print 1000.
+
+Test Case 8 (Error due to use of a variable without declaration)
+
+Try to do print i without declaring i. Must generate an err
+
+Test Case 9 (Error due to duplicate variable declarations)
+
+Try to declaring i twice. Must generate an error.
+
+Test Case 11 (nested if statements): i = 100; j = 500; if (i > j) if (i > 0) print i;
+
+Should not print anything
+
+
 """
 
 
@@ -147,6 +171,9 @@ def Declaration():
         token_pointer += 1
         #add new var to symbol table
         if token_pointer < len(tokens) and tokens[token_pointer] == "id":
+            if lexemes[token_pointer] in symbol_table:
+                print("Trying to declare the same variable twice. Error at index " + str(token_pointer))
+                exit(0)
             symbol_table[lexemes[token_pointer]] = [var_type, None]
             token_pointer += 1
     #declaration must end with a semicolon
@@ -225,6 +252,9 @@ def PrintStmt(evaluate):
     else:
         error("Missing print. Error at index " + str(token_pointer))
     result = Expression()
+    if not result:
+        print("Variable not declared. Error at index " + str(token_pointer))
+        exit(0)
     if token_pointer < len(tokens) and tokens[token_pointer] == ";":
         token_pointer += 1
     else:
@@ -240,19 +270,21 @@ is true, and if so, we evaluate the body of the if statement.
 """
 def IfStatement():
     global token_pointer
-    if tokens[token_pointer] == "if" and token_pointer < len(tokens):
+    evaluate = True
+    while tokens[token_pointer] == "if" and token_pointer < len(tokens):
         token_pointer += 1
-    else:
-        error("Missing 'if'. Error at index " + str(token_pointer))
-    if tokens[token_pointer] == '(' and token_pointer < len(tokens):
-        token_pointer += 1
-        evaluate = Expression() #get truth value for if statement
-    else:
-        error("Missing '('. Error at index " + str(token_pointer))
-    if tokens[token_pointer] == ')' and token_pointer < len(tokens):
-        token_pointer += 1
-    else:
-        error("Missing ')'. Error at index " + str(token_pointer))
+        if tokens[token_pointer] == '(' and token_pointer < len(tokens):
+            token_pointer += 1
+            if evaluate:
+                evaluate = Expression() #get truth value for if statement
+            else:
+                Expression()
+        else:
+            error("Missing '('. Error at index " + str(token_pointer))
+        if tokens[token_pointer] == ')' and token_pointer < len(tokens):
+            token_pointer += 1
+        else:
+            error("Missing ')'. Error at index " + str(token_pointer))
     Statement(evaluate)
     #check if we have an else block, not required
     if token_pointer < len(tokens) and tokens[token_pointer] == "else":
@@ -494,6 +526,8 @@ def Factor():
         if  tokens[token_pointer] == "id":
             token_pointer += 1
             #grab value from symbol table
+            if lexemes[token_pointer-1] not in symbol_table:
+                return False
             return symbol_table[lexemes[token_pointer-1]][1]
         elif tokens[token_pointer] == "intLiteral":
             token_pointer += 1
